@@ -1,0 +1,33 @@
+name: device_policy_controller
+description: A Flutter plugin package for managing device policies and restrictions (DPC), with features like kiosk mode app locking.
+version: 0.0.1
+repository: https://github.com/itisnajim/device-policy-controller
+
+topics:
+  - dpc
+  - device-policy-controller
+  - device-management
+  - kiosk
+  - admin-privileges
+
+environment:
+  sdk: ">=3.0.5 <4.0.0"
+  flutter: ">=3.3.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_platform_interface: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        minSdkVersion: 21
+        package: com.itisnajim.device_policy_controller
+        pluginClass: DevicePolicyControllerPlugin

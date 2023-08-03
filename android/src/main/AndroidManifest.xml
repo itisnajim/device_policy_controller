@@ -1,0 +1,25 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.itisnajim.device_policy_controller">
+
+  <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions"/>
+  <uses-permission android:name="android.permission.REBOOT" tools:ignore="ProtectedPermissions"/>
+
+  <application
+      android:name="${applicationName}">
+    <receiver
+        android:name=".AppDeviceAdminReceiver"
+        android:enabled="true"
+        android:permission="android.permission.BIND_DEVICE_ADMIN"
+        android:exported="false"
+        >
+      <meta-data
+          android:name="android.app.device_admin"
+          android:resource="@xml/device_admin_receiver" />
+
+      <intent-filter>
+        <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+      </intent-filter>
+    </receiver>
+  </application>
+</manifest>
