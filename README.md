@@ -72,7 +72,7 @@ The plugin provides the following features:
 **Please Note**: This plugin deals with device policies and admin privileges, use it with caution, and ensure that your app complies with all the relevant Google Play and Android Enterprise policies.
 
 ## Troubleshooting
-If you encounter any issues or have questions related to the `device_policy_controller` plugin, feel free to reach out to the plugin maintainers on the [GitHub repository](https://github.com/itisnajim/device-policy-controller).
+If you encounter any issues or have questions related to the `device_policy_controller` plugin, feel free to reach out to the plugin maintainers on the [GitHub repository](https://github.com/itisnajim/device_policy_controller).
 
 ## License
 This plugin package is published under the `MIT` License.
