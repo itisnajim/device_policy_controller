@@ -70,7 +70,7 @@ abstract class DevicePolicyControllerPlatform extends PlatformInterface {
   ///
   /// Returns a `Future` that completes with `true` if the device was locked
   /// successfully, otherwise completes with an error.
-  Future<bool> lockDevice(String? password);
+  Future<bool> lockDevice({String? password});
 
   /// Installs an application from the given APK URL.
   ///
@@ -84,7 +84,7 @@ abstract class DevicePolicyControllerPlatform extends PlatformInterface {
   ///
   /// Returns a `Future` that completes with `true` if the device was rebooted
   /// successfully, otherwise completes with an error.
-  Future<bool> rebootDevice();
+  Future<bool> rebootDevice({String? reason});
 
   /// Gets device information, such as the model and OS version.
   ///
@@ -133,4 +133,51 @@ abstract class DevicePolicyControllerPlatform extends PlatformInterface {
   /// Returns a `Future` that completes with `true` if the app is locked in kiosk mode,
   /// otherwise completes with an error.
   Future<bool> isAppLocked();
+
+  /// Clears the device owner app for an application, if it has been set.
+  ///
+  /// If the [packageName] parameter is provided, the method will attempt to clear the
+  /// device owner for the specified package. If [packageName] is null or not provided,
+  /// the method will use the package name of the current application as the default.
+  Future<void> clearDeviceOwnerApp({String? packageName});
+
+  /// Wipes the device data, restoring it to factory settings.
+  ///
+  /// The [flags] parameter is an optional integer value representing additional
+  /// options for the data wipe process. By default, it is set to `0`.
+  /// The [reason] parameter is an optional string that provides a reason or
+  /// description for the data wipe operation. If not provided, it will be `null`.
+  ///
+  /// Returns a `Future` that completes with no value upon successful execution,
+  /// otherwise completes with an error if the data wipe operation fails.
+  Future<void> wipeData({int flags = 0, String? reason});
+
+  /// Called by a device owner or profile owner of secondary users that is
+  /// affiliated with the device to disable the keyguard altogether.
+  ///
+  /// The [disabled] parameter indicates whether to disable the keyguard.
+  ///
+  /// Returns a `Future` that completes with no value upon successful execution,
+  /// otherwise completes with an error if the operation fails.
+  Future<void> setKeyguardDisabled({required bool disabled});
+
+  /// Enables or disables screen capture on the device.
+  ///
+  /// The [disabled] parameter indicates whether to disable screen capture.
+  /// When screen capture is disabled, users won't be able to take screenshots
+  /// or record the screen contents.
+  ///
+  /// Returns a `Future` that completes with no value upon successful execution,
+  /// otherwise completes with an error if the operation fails.
+  Future<void> setScreenCaptureDisabled({required bool disabled});
+
+  /// Enables or disables the camera on the device.
+  ///
+  /// The [disabled] parameter indicates whether to disable the camera.
+  /// When the camera is disabled, users won't be able to access the camera app
+  /// or use any apps that require camera access.
+  ///
+  /// Returns a `Future` that completes with no value upon successful execution,
+  /// otherwise completes with an error if the operation fails.
+  Future<void> setCameraDisabled({required bool disabled});
 }

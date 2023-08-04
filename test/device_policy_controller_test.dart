@@ -41,10 +41,10 @@ class MockDevicePolicyControllerPlatform
   Future<bool> lockApp({bool home = false}) => Future.value(true);
 
   @override
-  Future<bool> lockDevice(String? password) => Future.value(true);
+  Future<bool> lockDevice({String? password}) => Future.value(true);
 
   @override
-  Future<bool> rebootDevice() => Future.value(true);
+  Future<bool> rebootDevice({String? reason}) => Future.value(true);
 
   @override
   Future<bool> requestAdminPrivilegesIfNeeded() => Future.value(true);
@@ -56,6 +56,22 @@ class MockDevicePolicyControllerPlatform
 
   @override
   Future<bool> unlockApp() => Future.value(true);
+
+  @override
+  Future<void> clearDeviceOwnerApp({String? packageName}) => Future.value();
+
+  @override
+  Future<void> wipeData({int flags = 0, String? reason}) => Future.value();
+
+  @override
+  Future<void> setCameraDisabled({required bool disabled}) => Future.value();
+
+  @override
+  Future<void> setKeyguardDisabled({required bool disabled}) => Future.value();
+
+  @override
+  Future<void> setScreenCaptureDisabled({required bool disabled}) =>
+      Future.value();
 }
 
 void main() {
@@ -71,7 +87,8 @@ void main() {
 
   test('Lock Device', () async {
     // Call the method to lock the device
-    bool locked = await fakeDevicePolicyController.lockDevice("password123");
+    bool locked =
+        await fakeDevicePolicyController.lockDevice(password: "password123");
 
     // Check if the device is locked successfully
     expect(locked, true);

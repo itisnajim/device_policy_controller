@@ -1,5 +1,7 @@
 # device_policy_controller
 
+[![pub package](https://img.shields.io/pub/v/device_policy_controller.svg)](https://pub.dartlang.org/packages/device_policy_controller) [![GitHub license](https://img.shields.io/github/license/itisnajim/device_policy_controller)](https://github.com/itisnajim/device_policy_controller/blob/master/LICENSE)  [![GitHub issues](https://img.shields.io/github/issues/itisnajim/device_policy_controller)](https://github.com/itisnajim/device_policy_controller/issues)
+
 The Device Policy Controller (DPC) `device_policy_controller` plugin for Flutter allows your `android` app to become a Device Policy Controller and manage device policies. With this plugin, you can set application restrictions, lock the device, install applications, reboot the device, and more.
 
 ## Getting Started
@@ -24,8 +26,11 @@ To enable your app to become a Device Policy Controller (DPC), you can do it usi
 ```bash
 adb shell dpm set-device-owner com.your_flutter_app_id/com.itisnajim.device_policy_controller.AppDeviceAdminReceiver
 ```
-
 Replace **`com.your_flutter_app_id`** with your app's bundle ID. You can find the app's bundle ID in **android/app/build.gradle** file, under `android.defaultConfig.applicationId`.
+
+To generate the QR code or write the provisioning data into an NFC tag, you can use the information from the `provisioning_data.example.json` file located in the `example folder`. This JSON file contains the necessary data to configure your Flutter app as a Device Policy Controller (DPC).
+To access the full documentation and learn about these methods, visit the following link:
+[Android Management API - Provision a Device](https://developers.google.com/android/management/provision-device#qr_code_method)
 
 ## Usage
 
@@ -61,13 +66,13 @@ The plugin provides the following features:
 * Add and clear user restrictions on the device.
 * Lock the device with an optional password.
 * Install an application from a given APK URL.
-* Reboot the device.
 * Get device information, such as the model and OS version. *(no admin privileges is needed)*
 * Request admin privileges if needed.
 * Set whether to keep the screen awake. *(no admin privileges is needed)*
 * Check if admin privileges are active.
 * Lock the app in kiosk mode. (If the app doesn't have administrator privileges, the system's default pinning behavior will be applied.)
 * Unlock the app if it was locked using the plugin. (If the app doesn't have administrator privileges, the system's default unpinning behavior will be applied.)
+* And more.., see [API reference](https://pub.dev/documentation/device_policy_controller/latest/)
 
 **Please Note**: This plugin deals with device policies and admin privileges, use it with caution, and ensure that your app complies with all the relevant Google Play and Android Enterprise policies.
 

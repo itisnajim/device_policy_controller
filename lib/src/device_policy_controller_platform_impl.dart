@@ -56,21 +56,27 @@ class DevicePolicyControllerPlatformImpl
   }
 
   @override
-  Future<bool> lockDevice(String? password) async {
+  Future<bool> lockDevice({String? password}) async {
     return await methodChannel
         .invokeMethod('lockDevice', {'password': password});
   }
 
   @override
-  Future<bool> rebootDevice() async {
-    return await methodChannel.invokeMethod('rebootDevice');
+  Future<bool> rebootDevice({String? reason}) async {
+    return await methodChannel.invokeMethod('rebootDevice', {'reason': reason});
   }
 
   @override
-  Future<bool> requestAdminPrivilegesIfNeeded() {
-    return methodChannel
-        .invokeMethod('requestAdminPrivilegesIfNeeded')
-        .then((isGranted) => isGranted as bool);
+  Future<bool> wipeData({int flags = 0, String? reason}) async {
+    return await methodChannel.invokeMethod('wipeData', {
+      'flags': flags,
+      'reason': reason,
+    });
+  }
+
+  @override
+  Future<bool> requestAdminPrivilegesIfNeeded() async {
+    return await methodChannel.invokeMethod('requestAdminPrivilegesIfNeeded');
   }
 
   @override
@@ -90,5 +96,29 @@ class DevicePolicyControllerPlatformImpl
   @override
   Future<bool> unlockApp() async {
     return await methodChannel.invokeMethod('unlockApp');
+  }
+
+  @override
+  Future<void> clearDeviceOwnerApp({String? packageName}) {
+    return methodChannel
+        .invokeMethod('clearDeviceOwnerApp', {'packageName': packageName});
+  }
+
+  @override
+  Future<void> setCameraDisabled({required bool disabled}) {
+    return methodChannel
+        .invokeMethod('setCameraDisabled', {'disabled': disabled});
+  }
+
+  @override
+  Future<void> setKeyguardDisabled({required bool disabled}) {
+    return methodChannel
+        .invokeMethod('setKeyguardDisabled', {'disabled': disabled});
+  }
+
+  @override
+  Future<void> setScreenCaptureDisabled({required bool disabled}) {
+    return methodChannel
+        .invokeMethod('setScreenCaptureDisabled', {'disabled': disabled});
   }
 }

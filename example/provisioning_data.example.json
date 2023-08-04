@@ -1,0 +1,15 @@
+{
+  "_comment1": "Upon reviewing the comments, all properties beginning with '_comment' should be removed.",
+  "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.your_flutter_app_id/com.itisnajim.device_policy_controller.AppDeviceAdminReceiver",
+  "_comment2": "To obtain the checksum, execute the following command: `cat app-release.apk | openssl dgst -binary -sha256 | openssl base64 | tr '+/' '-_' | tr -d '='`",
+  "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": "ZcY-kNKGeyDamfuVfwk8fLSaatfkshAERTuWfSJg3co",
+  "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": "https://filebin.net/xxxxxxxxxxxxxxxx/app-release.apk",
+  "android.app.extra.PROVISIONING_SKIP_ENCRYPTION": true,
+  "_comment3": "The Wi-Fi extras are optional, and you may omit PROVISIONING_WIFI_SSID, PROVISIONING_WIFI_PASSWORD and PROVISIONING_WIFI_SECURITY_TYPE",
+  "android.app.extra.PROVISIONING_WIFI_SSID": "MyWifi",
+  "android.app.extra.PROVISIONING_WIFI_PASSWORD": "Abcd1234",
+  "android.app.extra.PROVISIONING_WIFI_SECURITY_TYPE": "WPA",
+  "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE": {
+    "com.your_flutter_app_id.EXTRA_KEY": "Any_Additional_Custom_Data"
+  }
+}
