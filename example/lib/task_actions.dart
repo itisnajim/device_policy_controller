@@ -1,26 +1,36 @@
+import 'dart:async';
+
 import 'package:device_policy_controller/device_policy_controller.dart';
 import 'package:flutter/material.dart';
 
+DevicePolicyController get dpc => DevicePolicyController.instance;
+
 class TaskAction {
   final String label;
-  final void Function(BuildContext context) task;
+  final FutureOr<dynamic> Function(BuildContext context) task;
+  void Function()? didPressed;
 
-  const TaskAction({
+  TaskAction({
     required this.label,
     required this.task,
+    this.didPressed,
   });
 
   ElevatedButton button(BuildContext context) => ElevatedButton(
-        onPressed: () => task(context),
+        onPressed: () async {
+          await task(context);
+          didPressed?.call();
+        },
         child: Text(label),
       );
 }
 
+const toggleScreenAwakeLabel = "Toggle Screen Awake ⚡";
 final taskActions = <TaskAction>[
   TaskAction(
     label: "Requests admin privileges if needed.",
     task: (context) {
-      DevicePolicyController.instance.requestAdminPrivilegesIfNeeded().then(
+      dpc.requestAdminPrivilegesIfNeeded().then(
         (isGranted) {
           showDialog(
             context: context,
@@ -49,7 +59,7 @@ final taskActions = <TaskAction>[
   TaskAction(
     label: "Checks if admin privileges are active",
     task: (context) {
-      DevicePolicyController.instance.isAdminActive().then((isAdmin) {
+      dpc.isAdminActive().then((isAdmin) {
         showDialog(
           context: context,
           builder: (context) {
@@ -75,20 +85,25 @@ final taskActions = <TaskAction>[
   TaskAction(
     label: "Locks the app in kiosk mode",
     task: (_) {
-      DevicePolicyController.instance.lockApp();
+      dpc.lockApp();
     },
   ),
   TaskAction(
-      label: "Unlocks the app",
-      task: (_) {
-        DevicePolicyController.instance.unlockApp();
-      }),
+    label: "Unlocks the app",
+    task: (_) {
+      dpc.unlockApp();
+    },
+  ),
+  TaskAction(
+    label: toggleScreenAwakeLabel,
+    task: (_) async {
+      await dpc.setKeepScreenAwake(!(await dpc.isScreenAwake()));
+    },
+  ),
   TaskAction(
     label: "Gets device information",
     task: (context) {
-      DevicePolicyController.instance
-          .getDeviceInfo()
-          .then((Map<String, dynamic>? info) {
+      dpc.getDeviceInfo().then((Map<String, dynamic>? info) {
         showDialog(
           context: context,
           builder: (context) {
@@ -118,8 +133,43 @@ final taskActions = <TaskAction>[
     },
   ),
   TaskAction(
+    label: "Set As Launcher",
+    task: (context) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Set As Launcher'),
+          content: const Text(
+              "Do you want to set the current app as the device's launcher."),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            TextButton(
+              child: const Text('Disable'),
+              onPressed: () {
+                dpc.setAsLauncher(enable: false);
+                Navigator.pop(context);
+              },
+            ),
+            TextButton(
+              child: const Text('Enable'),
+              onPressed: () {
+                dpc.setAsLauncher(enable: true);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      );
+    },
+  ),
+  TaskAction(
     label: "Clear Device Owner App",
-    task: (_) => DevicePolicyController.instance.clearDeviceOwnerApp(),
+    task: (_) => dpc.clearDeviceOwnerApp(),
   ),
   TaskAction(
     label: "Set Camera",
@@ -139,16 +189,14 @@ final taskActions = <TaskAction>[
             TextButton(
               child: const Text('Disable'),
               onPressed: () {
-                DevicePolicyController.instance
-                    .setCameraDisabled(disabled: true);
+                dpc.setCameraDisabled(disabled: true);
                 Navigator.pop(context);
               },
             ),
             TextButton(
               child: const Text('Enable'),
               onPressed: () {
-                DevicePolicyController.instance
-                    .setCameraDisabled(disabled: false);
+                dpc.setCameraDisabled(disabled: false);
                 Navigator.pop(context);
               },
             ),
@@ -175,16 +223,14 @@ final taskActions = <TaskAction>[
             TextButton(
               child: const Text('Disable'),
               onPressed: () {
-                DevicePolicyController.instance
-                    .setScreenCaptureDisabled(disabled: true);
+                dpc.setScreenCaptureDisabled(disabled: true);
                 Navigator.pop(context);
               },
             ),
             TextButton(
               child: const Text('Enable'),
               onPressed: () {
-                DevicePolicyController.instance
-                    .setScreenCaptureDisabled(disabled: false);
+                dpc.setScreenCaptureDisabled(disabled: false);
                 Navigator.pop(context);
               },
             ),
@@ -211,16 +257,14 @@ final taskActions = <TaskAction>[
             TextButton(
               child: const Text('Disable'),
               onPressed: () {
-                DevicePolicyController.instance
-                    .setKeyguardDisabled(disabled: true);
+                dpc.setKeyguardDisabled(disabled: true);
                 Navigator.pop(context);
               },
             ),
             TextButton(
               child: const Text('Enable'),
               onPressed: () {
-                DevicePolicyController.instance
-                    .setKeyguardDisabled(disabled: false);
+                dpc.setKeyguardDisabled(disabled: false);
                 Navigator.pop(context);
               },
             ),
@@ -248,7 +292,7 @@ final taskActions = <TaskAction>[
               ),
               TextButton(
                 onPressed: () {
-                  DevicePolicyController.instance.wipeData();
+                  dpc.wipeData();
                   Navigator.pop(context);
                 },
                 child: const Text(

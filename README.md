@@ -2,7 +2,7 @@
 
 [![pub package](https://img.shields.io/pub/v/device_policy_controller.svg)](https://pub.dartlang.org/packages/device_policy_controller) [![GitHub license](https://img.shields.io/github/license/itisnajim/device_policy_controller)](https://github.com/itisnajim/device_policy_controller/blob/master/LICENSE)  [![GitHub issues](https://img.shields.io/github/issues/itisnajim/device_policy_controller)](https://github.com/itisnajim/device_policy_controller/issues)
 
-The Device Policy Controller (DPC) `device_policy_controller` plugin for Flutter allows your `android` app to become a Device Policy Controller and manage device policies. With this plugin, you can set application restrictions, lock the device, install applications, reboot the device, and more.
+The Device Policy Controller (DPC) `device_policy_controller` plugin for Flutter allows your `android` app to become a Device Policy Controller and manage device policies. With this plugin, you can set application restrictions, lock the device, install applications, and more.
 
 ## Getting Started
 
@@ -72,7 +72,7 @@ The plugin provides the following features:
 * Check if admin privileges are active.
 * Lock the app in kiosk mode. (If the app doesn't have administrator privileges, the system's default pinning behavior will be applied.)
 * Unlock the app if it was locked using the plugin. (If the app doesn't have administrator privileges, the system's default unpinning behavior will be applied.)
-* And more.., see [API reference](https://pub.dev/documentation/device_policy_controller/latest/)
+* For more, see [API reference](https://pub.dev/documentation/device_policy_controller/latest/)
 
 **Please Note**: This plugin deals with device policies and admin privileges, use it with caution, and ensure that your app complies with all the relevant Google Play and Android Enterprise policies.
 

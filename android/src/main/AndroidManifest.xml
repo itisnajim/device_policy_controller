@@ -15,6 +15,13 @@
 
   <application
       android:name="${applicationName}">
+
+    <provider
+        android:authorities="com.itisnajim.device_policy_controller.multipreferences.MultiProvider"
+        android:name="com.itisnajim.device_policy_controller.multipreferences.MultiProvider"
+        android:process=":multi_preferences"
+        android:exported="false"/>
+
     <receiver
         android:name=".AppDeviceAdminReceiver"
         android:enabled="true"

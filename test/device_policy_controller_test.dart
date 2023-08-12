@@ -72,6 +72,31 @@ class MockDevicePolicyControllerPlatform
   @override
   Future<void> setScreenCaptureDisabled({required bool disabled}) =>
       Future.value();
+
+  @override
+  void handleBootCompleted(handler) {}
+
+  @override
+  Future<bool> startApp({String? packageName}) => Future.value(true);
+
+  @override
+  Future<bool> setAsLauncher({bool enable = true}) => Future.value(true);
+
+  @override
+  Future<void> clear() => Future.value();
+
+  @override
+  Future<String?> get(String contentKey, {String? defaultContent}) =>
+      Future.value("content");
+
+  @override
+  Future<void> put(String contentKey, {String? content}) => Future.value();
+
+  @override
+  Future<void> remove(String contentKey) => Future.value();
+
+  @override
+  Future<bool> isScreenAwake() => Future.value(false);
 }
 
 void main() {

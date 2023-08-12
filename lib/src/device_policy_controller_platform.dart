@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
+import 'device_policy_controller.dart';
 import 'device_policy_controller_platform_impl.dart';
 
 abstract class DevicePolicyControllerPlatform extends PlatformInterface {
@@ -23,6 +26,55 @@ abstract class DevicePolicyControllerPlatform extends PlatformInterface {
     PlatformInterface.verifyToken(instance, _token);
     _instance = instance;
   }
+
+  /// Sets the current Flutter app as the device's launcher or disables it as the launcher.
+  ///
+  /// If [enable] is `true`, the Flutter app will be set as the device's launcher,
+  /// meaning it will be launched when the user presses the home button or attempts
+  /// to access the launcher screen. The app will become the default launcher until
+  /// either the user changes the default launcher or this method is called with [enable]
+  /// set to `false`.
+  ///
+  /// If [enable] is `false`, the app will be disabled as the launcher, and the device
+  /// will revert to its default launcher behavior.
+  ///
+  /// This method returns a [Future<bool>] that completes with `true` if the operation
+  /// was successful, and `false` if it failed or encountered an error. If [enable]
+  /// is `false`, the operation is considered successful even if there was no previous
+  /// launcher set for the app.
+  Future<bool> setAsLauncher({bool enable = true});
+
+  /// Starts the specified application identified by [packageName].
+  ///
+  /// If [packageName] is provided and corresponds to an installed application
+  /// package, this method will launch the application. If [packageName] is `null`,
+  /// the method will attempt to launch the default application for the current
+  /// Flutter app.
+  ///
+  /// The method returns a [Future<bool>] that completes with `true` if the application
+  /// was successfully launched or if the default application for the Flutter app was
+  /// started. If the specified [packageName] does not correspond to any installed
+  /// application or there is an error during the launch process, the [Future] completes
+  /// with `false`.
+  ///
+  /// Example usage:
+  /// ```dart
+  /// bool success = await DevicePolicyController.instance.startApp('com.example.app');
+  /// if (success) {
+  ///   print('Application started successfully!');
+  /// } else {
+  ///   print('Application not found or failed to start.');
+  /// }
+  /// ```
+  Future<bool> startApp({String? packageName});
+
+  /// Handles the BOOT_COMPLETED event received from the platform side (Android).
+  ///
+  /// When the Android device boots up, it broadcasts a BOOT_COMPLETED event to the
+  /// registered BroadcastReceiver. This method is called in response to the event,
+  /// allowing the Flutter app to handle any necessary actions after the device has booted.
+  void handleBootCompleted(
+      FutureOr<dynamic> Function(DevicePolicyController dpc) handler);
 
   /// Sets application restrictions for a specified package.
   ///
@@ -106,6 +158,16 @@ abstract class DevicePolicyControllerPlatform extends PlatformInterface {
   /// successfully, otherwise completes with an error.
   Future<void> setKeepScreenAwake(bool enable);
 
+  /// Retrieves the current screen awake status.
+  ///
+  /// Returns a `Future` that completes with a `bool` indicating whether the screen
+  /// is being kept awake (true) or not (false). The screen is considered awake if
+  /// the keep screen awake setting is currently enabled.
+  ///
+  /// If the screen awake status cannot be determined or if an error occurs during
+  /// retrieval, the `Future` completes with an error.
+  Future<bool> isScreenAwake();
+
   /// Checks if admin privileges are active.
   ///
   /// Returns a `Future` that completes with `true` if admin privileges are active,
@@ -180,4 +242,34 @@ abstract class DevicePolicyControllerPlatform extends PlatformInterface {
   /// Returns a `Future` that completes with no value upon successful execution,
   /// otherwise completes with an error if the operation fails.
   Future<void> setCameraDisabled({required bool disabled});
+
+  /// Retrieves the value associated with the provided [contentKey] from the
+  /// plugin shared preferences instance.
+  ///
+  /// If a value corresponding to [contentKey] is found, it will be returned.
+  /// If no value is found and a [default] value is provided, the [default]
+  /// value will be returned. If neither a value nor a [default] is found,
+  /// `null` will be returned.
+  Future<String?> get(String contentKey, {String? defaultContent});
+
+  /// Stores the provided [content] with the associated [contentKey] in the
+  /// plugin shared preferences instance.
+  ///
+  /// The [content] value will be associated with the provided [contentKey].
+  /// If [content] is `null`, any existing value associated with [contentKey]
+  /// will be removed from the shared preferences.
+  Future<void> put(String contentKey, {String? content});
+
+  /// Removes the value associated with the provided [contentKey] from the
+  /// plugin shared preferences instance.
+  ///
+  /// If a value corresponding to [contentKey] is found, it will be removed.
+  /// If no value is found, no action will be taken.
+  Future<void> remove(String contentKey);
+
+  /// Clears all values stored in the plugin shared preferences instance.
+  ///
+  /// This function will remove all key-value pairs stored in the plugin shared
+  /// preferences instance, effectively resetting it to its initial state.
+  Future<void> clear();
 }

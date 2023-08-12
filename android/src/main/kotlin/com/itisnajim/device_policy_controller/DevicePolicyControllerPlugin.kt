@@ -17,10 +17,11 @@ import android.util.Base64
 import android.util.Log
 import android.view.ViewGroup
 import android.view.WindowManager
-import androidx.annotation.NonNull
+import com.itisnajim.device_policy_controller.multipreferences.MultiPreferences
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
@@ -30,6 +31,7 @@ import io.flutter.plugin.common.PluginRegistry
 
 private const val PROVISION_REQUEST_CODE = 1337
 
+
 /** DevicePolicyControllerPlugin */
 class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     PluginRegistry.ActivityResultListener {
@@ -37,43 +39,76 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
     ///
     /// This local reference serves to register the plugin with the Flutter Engine and unregister it
     /// when the Flutter Engine is detached from the Activity
+    private lateinit var preferences: MultiPreferences
     private lateinit var channel: MethodChannel
     private lateinit var mDevicePolicyManager: DevicePolicyManager
     private lateinit var adminComponentName: ComponentName
     private lateinit var context: Context
     private var activity: Activity? = null
-    private var isInitialized = false;
+    private var isInitialized = false
     private var adminPrivilegeCallback: ((Boolean) -> Unit)? = null
 
-
     companion object {
-        fun log(message: String) = Log.d("dpc::", message);
+        fun log(message: String) = Log.d("dpc::", message)
+        private const val methodChannelName = "device_policy_controller"
+        fun methodChannel(messenger: BinaryMessenger) = MethodChannel(messenger, methodChannelName)
+
+        const val DEVICE_ADMIN_ENABLED_ACTION = "android.app.action.DEVICE_ADMIN_ENABLED"
+        const val BOOT_COMPLETED_ACTION = "android.intent.action.BOOT_COMPLETED"
+        const val XM_SCAN_ACTION = "com.android.server.scannerservice.broadcast"
+        const val SHINIOW_SCAN_ACTION = "com.android.server.scannerservice.shinow"
+        const val IDATA_SCAN_ACTION = "android.intent.action.SCANRESULT"
+        const val YBX_SCAN_ACTION = "android.intent.ACTION_DECODE_DATA"
+        const val PL_SCAN_ACTION = "scan.rcv.message"
+        const val BARCODE_DATA_ACTION = "com.ehsy.warehouse.action.BARCODE_DATA"
+        const val HONEYWELL_SCAN_ACTION = "com.honeywell.decode.intent.action.EDIT_DATA"
+        const val BAR_SCAN_ACTION = "android.intent.ACTION_BAR_SCAN"
+        const val DONGTING_BAR_SCAN_ACTION = "com.Dongting.WeScan.intent.action.ACTION_BAR_SCAN"
+
+        val actions = arrayOf(
+            DEVICE_ADMIN_ENABLED_ACTION,
+            BOOT_COMPLETED_ACTION,
+            XM_SCAN_ACTION,
+            SHINIOW_SCAN_ACTION,
+            IDATA_SCAN_ACTION,
+            YBX_SCAN_ACTION,
+            YBX_SCAN_ACTION,
+            PL_SCAN_ACTION,
+            BARCODE_DATA_ACTION,
+            HONEYWELL_SCAN_ACTION,
+            BAR_SCAN_ACTION,
+            DONGTING_BAR_SCAN_ACTION,
+        )
     }
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {}
     override fun onDetachedFromActivityForConfigChanges() {}
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
-        activity = binding.activity;
-        initializeIfNeeded();
+        activity = binding.activity
     }
 
     override fun onDetachedFromActivity() {
         this.activity = null
     }
 
-    override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
     }
 
-    override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        context = flutterPluginBinding.applicationContext
+    override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        log("onAttachedToEngine")
 
-        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "device_policy_controller")
+        context = binding.applicationContext
+        channel = methodChannel(binding.binaryMessenger)
         channel.setMethodCallHandler(this)
 
+        preferences = MultiPreferences("DevicePolicyControllerPlugin", context.contentResolver)
+
+
+        initializeIfNeeded();
     }
 
-    override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
+    override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
             "setApplicationRestrictions" -> {
                 val packageName = call.argument<String>("packageName")
@@ -118,6 +153,8 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
                 setKeepScreenAwake(enable ?: false, result)
             }
 
+            "isScreenAwake" -> isScreenAwake(result)
+
             "isAdminActive" -> result.success(isAdminActive())
             "lockApp" -> {
                 val home = call.argument<Boolean>("home") ?: false
@@ -154,9 +191,53 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
                 setCameraDisabled(disabled ?: true, result)
             }
 
+            "setAsLauncher" -> {
+                val enable = call.argument<Boolean>("enable")
+                setAsLauncher(enable ?: false, result)
+            }
+
+            "startApp" -> {
+                val packageName = call.argument<String>("packageName")
+                startApp(packageName, result)
+            }
+
+            "get" -> {
+                val contentKey = call.argument<String>("contentKey")
+                val default = call.argument<String>("default")
+                get(contentKey!!, default, result)
+            }
+
+            "put" -> {
+                val contentKey = call.argument<String>("contentKey")
+                val content = call.argument<String>("content")
+                put(contentKey!!, content, result)
+            }
+
+            "remove" -> {
+                val contentKey = call.argument<String>("contentKey")
+                remove(contentKey!!, result)
+            }
+
+            "clear" -> clear(result)
+
             else -> result.notImplemented()
         }
     }
+
+
+    private fun startApp(packageName: String?, result: Result) {
+        val intent =
+            context.packageManager.getLaunchIntentForPackage(packageName ?: context.packageName)
+        if (intent != null) {
+            // intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            context.startActivity(intent)
+            result.success(true)
+        } else {
+            // Package not found.
+            result.success(false)
+        }
+    }
+
 
     private fun setKeyguardDisabled(disabled: Boolean, result: Result) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -329,7 +410,7 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
                 adminComponentName,
                 DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED
             )
-            val passwordBytes = Base64.decode(password, Base64.NO_WRAP);
+            val passwordBytes = Base64.decode(password, Base64.NO_WRAP)
             var res = false
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 if (mDevicePolicyManager.isResetPasswordTokenActive(adminComponentName)) {
@@ -431,20 +512,32 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
 
     private fun initializeIfNeeded() {
         if (!isInitialized) {
-            val appDeviceAdminReceiver = AppDeviceAdminReceiver()
-            val intentFilter = IntentFilter()
-            intentFilter.addAction("android.app.action.DEVICE_ADMIN_ENABLED")
-            context.registerReceiver(appDeviceAdminReceiver, intentFilter)
-            adminComponentName = appDeviceAdminReceiver.getWho(context);
-            log("registerReceiver packageName: " + adminComponentName.packageName + ", className: " + adminComponentName.className)
-            mDevicePolicyManager =
-                context.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+            try {
+                val appDeviceAdminReceiver = AppDeviceAdminReceiver()
+                /*appDeviceAdminReceiver.setBootCompletedCallback {
+                    log("setBootCompletedCallback")
+                    instance.channel.invokeMethod("handleBootCompleted", null)
+                }*/
+                val intentFilter = IntentFilter()
+                actions.forEach { intentFilter.addAction(it) }
+                log("actions: ${actions.joinToString(", ") }}")
+                context.registerReceiver(appDeviceAdminReceiver, intentFilter)
+                adminComponentName = appDeviceAdminReceiver.getWho(context)
+                log("registerReceiver packageName: " + adminComponentName.packageName + ", className: " + adminComponentName.className)
+                mDevicePolicyManager =
+                    context.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
 
-            val shouldStartActivityAtBootCompleted = AppDeviceAdminReceiver.shouldStartActivityAtBootCompleted(context)
-            if(shouldStartActivityAtBootCompleted){
-                lockApp(true, null)
+                val fromBootCompleted = AppDeviceAdminReceiver.isFromBootCompleted(context);
+                log("fromBootCompleted $fromBootCompleted")
+                if (fromBootCompleted) {
+                    channel.invokeMethod("handleBootCompleted", null)
+                    AppDeviceAdminReceiver.setIsFromBootCompleted(context, false)
+                }
+
+            } catch (e: Exception) {
             }
         }
+
         isInitialized = true
     }
 
@@ -458,7 +551,7 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
         if (!isDeviceOwnerApp) {
             adminPrivilegeCallback?.invoke(false)
             adminPrivilegeCallback = null
-            return;
+            return
         }
 
         if (!isAdminActive()) {
@@ -483,7 +576,7 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_USER_CONSENT, true);
+                intent.putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_USER_CONSENT, true)
             }
 
             intent.putExtra(
@@ -502,7 +595,7 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
 
     private fun requestAdminPrivilegesIfNeeded(result: Result) {
         requestAdminPrivilegesIfNeeded { isPrivilegeGranted ->
-            result.success(isPrivilegeGranted);
+            result.success(isPrivilegeGranted)
         }
     }
 
@@ -517,76 +610,136 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
         } else {
             activity!!.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
-        result.success(null);
+        result.success(null)
+    }
+
+    private fun isScreenAwake(result: Result) {
+        if (activity == null) {
+            result.error(
+                "A foreground activity is required.",
+                "isScreenAwake requires a foreground activity",
+                null
+            )
+            return
+        }
+
+        val flags = activity!!.window.attributes.flags
+        val isAwake = flags and WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON != 0
+        result.success(isAwake)
     }
 
     private fun isAdminActive(): Boolean {
         val devicePolicyManager = mDevicePolicyManager
         val adminComponent = adminComponentName
 
-        return devicePolicyManager.isAdminActive(adminComponent);
+        return devicePolicyManager.isAdminActive(adminComponent)
     }
 
     private fun clearDeviceOwnerApp(packageName: String?, result: Result) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mDevicePolicyManager.clearDeviceOwnerApp(packageName ?: context.packageName)
-        };
-        result.success(null);
-    }
-
-    private fun setLauncher(enable: Boolean) {
-        if (activity == null) return;
-        try {
-
-            val packageManager = context.packageManager
-            val activityComponent = ComponentName(context, activity!!::class.java)
-
-            if (enable) {
-                packageManager.setComponentEnabledSetting(
-                    activityComponent,
-                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                    PackageManager.DONT_KILL_APP
-                )
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    val intentFilter = IntentFilter(Intent.ACTION_MAIN)
-                    intentFilter.addCategory(Intent.CATEGORY_HOME)
-                    intentFilter.addCategory(Intent.CATEGORY_DEFAULT)
-
-                    mDevicePolicyManager.addPersistentPreferredActivity(
-                        adminComponentName,
-                        intentFilter,
-                        activityComponent
-                    )
-                }
-                AppDeviceAdminReceiver.setShouldStartActivityAtBootCompleted(context, true)
-                log("setLauncher enabled")
-            } else {
-                // Disable your app as the launcher
-                packageManager.setComponentEnabledSetting(
-                    activityComponent,
-                    PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
-                    PackageManager.DONT_KILL_APP
-                )
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    mDevicePolicyManager.clearPackagePersistentPreferredActivities(
-                        adminComponentName,
-                        context.packageName
-                    )
-                }
-                AppDeviceAdminReceiver.setShouldStartActivityAtBootCompleted(context, false)
-                log("setLauncher disabled")
-            }
-
-        } catch (e: Exception) {
-            log(e.localizedMessage)
         }
+        result.success(null)
     }
 
+    private fun resetPreferredLauncherAndOpenChooser(context: Context) {
+        val packageManager = context.packageManager
+        val activityComponent = ComponentName(context, activity!!::class.java)
+        packageManager.setComponentEnabledSetting(
+            activityComponent,
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+            PackageManager.DONT_KILL_APP
+        )
+        val selector = Intent(Intent.ACTION_MAIN)
+        selector.addCategory(Intent.CATEGORY_HOME)
+        selector.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startActivity(selector)
+        packageManager.setComponentEnabledSetting(
+            activityComponent,
+            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
+            PackageManager.DONT_KILL_APP
+        )
+    }
+
+    private fun isAppLauncherDefault(): Boolean {
+        val intent = Intent(Intent.ACTION_MAIN)
+        intent.addCategory(Intent.CATEGORY_HOME)
+        val resolveInfo =
+            context.packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+        val currentHomePackage = resolveInfo?.activityInfo?.packageName
+
+        return currentHomePackage == context.packageName;
+    }
+
+    private fun get(contentKey: String, defaultValue: String?, result: Result) {
+        val value = preferences.getString(contentKey, defaultValue)
+        log("get contentKey: $contentKey, value: $value")
+        result.success(value)
+    }
+
+    private fun put(contentKey: String, content: String?, result: Result) {
+        log("put contentKey: $contentKey, content: $content")
+        preferences.setString(contentKey, content ?: "")
+        result.success(null)
+    }
+
+    private fun remove(contentKey: String, result: Result) {
+        log("remove contentKey: $contentKey")
+        preferences.removePreference(contentKey)
+        result.success(null)
+    }
+
+    private fun clear(result: Result) {
+        preferences.clearPreferences()
+        result.success(null)
+    }
+
+
+    private fun setAsLauncher(enable: Boolean, result: Result) {
+        val isAdminActive = this.isAdminActive()
+        val isAppLauncherDefault = this.isAppLauncherDefault()
+
+        if (enable && isAppLauncherDefault || !enable && !isAppLauncherDefault) {
+            result.success(true)
+            return
+        }
+
+        if (isAdminActive && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (!isAppLauncherDefault) {
+                val activity = this.activity ?: run { result.success(false); return }
+                val activityComponent = ComponentName(context, activity::class.java)
+                val filter = IntentFilter(Intent.ACTION_MAIN).apply {
+                    addCategory(Intent.CATEGORY_HOME)
+                    addCategory(Intent.CATEGORY_DEFAULT)
+                }
+                mDevicePolicyManager.addPersistentPreferredActivity(
+                    adminComponentName, filter, activityComponent
+                )
+            } else {
+                mDevicePolicyManager.clearPackagePersistentPreferredActivities(
+                    adminComponentName, context.packageName
+                )
+            }
+            result.success(true); return
+        } else if (!isAdminActive) {
+            if (!isAppLauncherDefault) {
+                resetPreferredLauncherAndOpenChooser(context)
+            } else {
+                context.packageManager.clearPackagePreferredActivities(context.packageName)
+                val intent = Intent(Intent.ACTION_MAIN).apply {
+                    addCategory(Intent.CATEGORY_HOME)
+                }
+                context.startActivity(intent)
+            }
+            result.success(true); return
+        }
+        result.success(false); return
+    }
 
     private fun lockApp(home: Boolean, result: Result?) {
         if (activity == null) {
             result?.success(false)
-            return;
+            return
         }
         val isAdminActive = isAdminActive()
         if (isAdminActive) {
@@ -620,7 +773,6 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
                 }
             }
 
-            setLauncher(true);
             result?.success(true)
 
         } else {
@@ -642,22 +794,24 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
     private fun unlockApp(result: Result) {
         if (activity == null) {
             result.success(false)
-            return;
+            return
         }
         if (isAdminActive()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 activity!!.stopLockTask()
                 //mDevicePolicyManager.clearDeviceOwnerApp(context.packageName);
+                result.success(true)
+                return
             }
 
         } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 activity!!.stopLockTask()
+                result.success(true)
+                return
             }
         }
-
-        setLauncher(false);
-        result.success(true)
+        result.success(false)
     }
 
     private fun isAppLocked(): Boolean {
@@ -668,7 +822,7 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 return service.lockTaskModeState == ActivityManager.LOCK_TASK_MODE_LOCKED
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                return service.isInLockTaskMode;
+                return service.isInLockTaskMode
             }
             return false
         }
@@ -699,4 +853,5 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
         }
         return false
     }
+
 }
