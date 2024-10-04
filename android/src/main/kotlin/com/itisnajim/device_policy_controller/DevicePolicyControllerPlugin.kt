@@ -81,7 +81,9 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
         )
     }
 
-    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {}
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+        activity = binding.activity
+    }
     override fun onDetachedFromActivityForConfigChanges() {}
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activity = binding.activity
@@ -522,6 +524,11 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
                 actions.forEach { intentFilter.addAction(it) }
                 log("actions: ${actions.joinToString(", ") }}")
                 context.registerReceiver(appDeviceAdminReceiver, intentFilter)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    context.registerReceiver(appDeviceAdminReceiver, intentFilter, Context.RECEIVER_NOT_EXPORTED)
+                }else {
+                    context.registerReceiver(appDeviceAdminReceiver, intentFilter)
+                }
                 adminComponentName = appDeviceAdminReceiver.getWho(context)
                 log("registerReceiver packageName: " + adminComponentName.packageName + ", className: " + adminComponentName.className)
                 mDevicePolicyManager =
