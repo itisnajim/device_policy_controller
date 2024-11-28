@@ -521,7 +521,7 @@ class DevicePolicyControllerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
                 val intentFilter = IntentFilter()
                 actions.forEach { intentFilter.addAction(it) }
                 log("actions: ${actions.joinToString(", ") }}")
-                context.registerReceiver(appDeviceAdminReceiver, intentFilter)
+                context.registerReceiver(appDeviceAdminReceiver, intentFilter, 2)
                 adminComponentName = appDeviceAdminReceiver.getWho(context)
                 log("registerReceiver packageName: " + adminComponentName.packageName + ", className: " + adminComponentName.className)
                 mDevicePolicyManager =
