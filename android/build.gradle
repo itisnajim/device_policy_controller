@@ -26,8 +26,7 @@ apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion 31
-
-        namespace "com.itisnajim.device_policy_controller"
+    namespace = "com.itisnajim.device_policy_controller"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
